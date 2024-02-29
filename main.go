@@ -7,6 +7,18 @@ import (
 	"strings"
 )
 
+func make_A(a string, v uint16) string{
+	res := "0"
+	return res
+
+}
+
+func make_C(a string) string{
+	res := "1"
+	return res
+}
+
+
 func main(){
 	args := os.Args
 	fmt.Println(args)
@@ -21,11 +33,7 @@ func main(){
     
     lines := strings.Split(f, "\n")
 
-    // for _, line := range lines {
-    //     fmt.Println(line)
-    // }
-
-	symbol_table := map[string]int{
+	symbol_table := map[string]uint16{
 		"R0": 0,
 		"R1": 1,
 		"R2": 2,
@@ -52,7 +60,7 @@ func main(){
 	}
 
 	
-	C_INS := map[string]int{
+	C_INS := map[string]uint8{
 		"NONE": 0b000,
 		"JGT" : 0b001,
 		"JEQ" : 0b010,
@@ -66,13 +74,13 @@ func main(){
 	symbol_table["R0"] = 0
 
 	first_pass := make([]string,0)
-	pc := 0
+	pc := uint16(0)
 	for _,line := range lines{
 		ws ,_ := regexp.MatchString("//.*|^\\s$",line)
 		label,_ := regexp.MatchString("^\\(.+\\)",line)
 		
 		if !ws && line!="" {
-			first_pass = append(first_pass, line)
+			first_pass = append(first_pass, strings.TrimSpace(line))
 			if label{
 				// fmt.Println(line)
 				symbol_table[line[1:len(line)-2]] = pc
@@ -80,12 +88,36 @@ func main(){
 			pc++
 		}
 	}
-
-	// for _,line := range first_pass{
-	// 	constant, _ = regexp.MustCompile()
-	// }
 	
-	// defer fmt.Println(symbol_table)
+	next_var_availble := uint16(16)
+	
+	to_bin := make([]string,0)
+	// second pass
+	for _,line := range first_pass{
+		// fmt.Printf("line: %v\n", line)
+		// constant, _ := regexp.MatchString("^@\\d+",line)
+		variable, _ := regexp.MatchString("^@[\\$_a-zA-Z\\.:]+[\\$_a-zA-Z0-9\\.:]*",line)
+		
+		if variable{
+			// fmt.Println(line)
+			symbol_table[line] = next_var_availble
+			if next_var_availble+1 == symbol_table["SCREEN"] || next_var_availble+1 == symbol_table["KBD"]{
+				
+				next_var_availble++
+			}
+			y := line[1:]
+			fmt.Println(y)
+			next_var_availble++
+		}
+
+
+
+
+
+
+	}
+	
+	
 
 
 }
