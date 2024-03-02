@@ -1,0 +1,2 @@
+go 1.18.1 linux/amd64
+sudo apt-get -y install golang-go

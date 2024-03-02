@@ -5,3 +5,7 @@ build:
 
 run:
 	@./$(BIN_NAME) $(path)
+
+submit:
+	zip project06-jamesshima ./*
+	echo "created zip for canvas"
