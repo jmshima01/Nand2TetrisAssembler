@@ -1,2 +1,3 @@
 Assembler
-test/*
+tests/*
+asm/*

@@ -13,7 +13,6 @@ type C_INSTURCTION struct{
 	comp string;
 	dest string;
 	jmp string;
-
 }
 
 func get_availible_addr(ram map[string]uint16, s string) uint16{
@@ -41,12 +40,10 @@ func get_availible_addr(ram map[string]uint16, s string) uint16{
 				found = true
 			}
 		}
-
 		if !found{
 			break
 		}
 		init++
-
 	}
 	return init
 }
@@ -229,14 +226,13 @@ func make_C(line string) C_INSTURCTION{
 		default:
 			j = "000"
 	}
-
 	return C_INSTURCTION{a:a,comp:c,dest: dest,jmp: j}
 }
 
 
+
 func main(){
 	args := os.Args
-	fmt.Println(args)
 	data, err := os.ReadFile(args[1])
     if err != nil {
         fmt.Println("Error reading file:", err)
@@ -244,8 +240,6 @@ func main(){
     }
 
     f := string(data)
-
-    
     lines := strings.Split(f, "\n")
 
 	symbol_table := map[string]uint16{
@@ -276,9 +270,10 @@ func main(){
 
 	symbol_table["R0"] = 0
 	labels := make(map[string]uint16)
-
 	first_pass := make([]string,0)
 	pc := uint16(0)
+	assembly := make([]string,0)
+
 	for _,line := range lines{
 		ws ,_ := regexp.MatchString("//.*|^\\s$",line)
 		label,_ := regexp.MatchString("^\\(.+\\)",line)
@@ -286,27 +281,13 @@ func main(){
 		if !ws && line!="" {
 			first_pass = append(first_pass, strings.TrimSpace(line))
 			if label{
-				// fmt.Println(line)
-				// symbol_table[line[1:len(line)-2]] = pc
 				labels[line[1:len(line)-2]] = pc
 				continue
-				
-				
 			}
 			pc++
 		}
 	}
-
-	for i,v := range first_pass{
-		fmt.Println(v,"    ",i)
-	}
-	fmt.Println("===============")
-	// addr_availble := get_availible_addr(symbol_table)
 	
-	// to_bin := make([]string,0)
-	// second pass
-	curr_A := bin_A("R0",symbol_table,true)
-	assembly := make([]string,0)
 	for _,line := range first_pass{
 		// fmt.Printf("line: %v\n", line)
 		constant, _ := regexp.MatchString("^@[0-9]+$",line)
@@ -318,19 +299,18 @@ func main(){
 			_,ok := labels[line[1:]]
 			if ok{
 				assembly= append(assembly, bin_A(line[1:],labels,true))
-			}else{
+			} else{
 				symbol_table[line[1:]] = get_availible_addr(symbol_table,line[1:])
 				assembly= append(assembly, bin_A(line[1:],symbol_table,true))
 			}
-			fmt.Println("var: ", curr_A," : ",line)
+			// fmt.Println("var: ", curr_A," : ",line)
 		} else if constant{
 			assembly = append(assembly, bin_A(line[1:],symbol_table,false))
-			fmt.Println("const: ", curr_A," : ",line)
+			// fmt.Println("const: ", curr_A," : ",line)
 
 		} else if c_inst{
-			// s = make_C(line)
 			assembly = append(assembly, make_C(line).bin_C())
-			fmt.Println(line,":",make_C(line).bin_C())
+			// fmt.Println(line,":",make_C(line).bin_C())
 
 		} else if label{
 			continue
@@ -340,22 +320,17 @@ func main(){
 			os.Exit(1)
 		}
 	}
-
-	outdata := make([]byte, 0)
 	
-	fmt.Printf("\n======\n\n")
+	outdata := make([]byte, 0)
 	for _,v := range assembly{
-		fmt.Println(v)
 		for _,x := range v{
 			outdata = append(outdata, byte(x))
 		}
 		outdata = append(outdata, '\n')
 	}
-	fmt.Println()
-	fmt.Println(symbol_table)
 
-	// name := strings.Split(args[1],".")[0]+".hack"
-	name:="out2.hack"
+	name := strings.Split(args[1],".")[0]+".hack"
+	
 	err = os.WriteFile(name,outdata,0644)
 	if err!=nil{
 		fmt.Println("Error: writing to file", err)
