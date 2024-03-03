@@ -41,6 +41,7 @@ func get_availible_addr(ram map[string]uint16, s string) uint16{
 				found = true
 			}
 		}
+
 		if !found{
 			break
 		}
@@ -83,11 +84,17 @@ func make_C(line string) C_INSTURCTION{
 			dest = "010"
 		case "DM":
 			dest = "011"
+		case "MD":
+			dest = "011"
 		case "A":
 			dest = "100"
 		case "AM":
 			dest = "101"
+		case "MA":
+			dest = "101"
 		case "AD":
+			dest = "110"
+		case "DA":
 			dest = "110"
 		case "ADM":
 			dest = "111"
@@ -268,6 +275,7 @@ func main(){
 	}
 
 	symbol_table["R0"] = 0
+	labels := make(map[string]uint16)
 
 	first_pass := make([]string,0)
 	pc := uint16(0)
@@ -279,7 +287,8 @@ func main(){
 			first_pass = append(first_pass, strings.TrimSpace(line))
 			if label{
 				// fmt.Println(line)
-				symbol_table[line[1:len(line)-2]] = pc
+				// symbol_table[line[1:len(line)-2]] = pc
+				labels[line[1:len(line)-2]] = pc
 				continue
 				
 				
@@ -300,20 +309,22 @@ func main(){
 	assembly := make([]string,0)
 	for _,line := range first_pass{
 		// fmt.Printf("line: %v\n", line)
-		constant, _ := regexp.MatchString("^@\\d+",line)
+		constant, _ := regexp.MatchString("^@[0-9]+$",line)
 		variable, _ := regexp.MatchString("^@[\\$_a-zA-Z\\.:]+[\\$_a-zA-Z0-9\\.:]*",line)
-		c_inst, _ := regexp.MatchString("(^(D|M|A|DM|AM|ADM|AD)=(0|1|-1|D|A|!D|!A|-D|-A|D+1|A+1|D-1|A-1|D+A|D-A|A-D|D&A|D\\|A|M|!M|-M|M+1|M-1|D+M|M-D|D-M|D&M|D\\|M);(JNE|JEQ|JMP|JLT|JLE|JGT|JGE))|((0|1|-1|D|A|!D|!A|-D|-A|D+1|A+1|D-1|A-1|D+A|D-A|A-D|D&A|D\\|A|M|!M|-M|M+1|M-1|D+M|M-D|D-M|D&M|D\\|M);(JNE|JEQ|JMP|JLT|JLE|JGT|JGE))|(^(D|M|A|DM|AM|ADM|AD)=(0|1|-1|D|A|!D|!A|-D|-A|D+1|A+1|D-1|A-1|D+A|D-A|A-D|D&A|D\\|A|M|!M|-M|M+1|M-1|D+M|M-D|D-M|D&M|D\\|M))",line)
-		label, _ := regexp.MatchString("^\\([\\$_a-zA-Z\\.:]+[\\$_a-zA-Z0-9\\.:]*\\)",line)
+		c_inst, _ := regexp.MatchString("^((D|M|A|DM|AM|ADM|AD|MD|MA|DA)=)?(0|1|-1|D|A|!D|!A|-D|-A|D\\+1|A\\+1|D-1|A-1|D\\+A|D-A|A-D|D&A|D\\|A|M|!M|-M|M\\+1|M-1|D\\+M|M-D|D-M|D&M|D\\|M)(;JNE|;JEQ|;JMP|;JLT|;JLE|;JGT|;JGE)?",line)
+		label, _ := regexp.MatchString("^\\(.+\\)",line)
 		
 		if variable{
-			symbol_table[line[1:]] = get_availible_addr(symbol_table,line[1:])
-			curr_A = bin_A(line[1:],symbol_table,true)
-			assembly= append(assembly, curr_A)
+			_,ok := labels[line[1:]]
+			if ok{
+				assembly= append(assembly, bin_A(line[1:],labels,true))
+			}else{
+				symbol_table[line[1:]] = get_availible_addr(symbol_table,line[1:])
+				assembly= append(assembly, bin_A(line[1:],symbol_table,true))
+			}
 			fmt.Println("var: ", curr_A," : ",line)
 		} else if constant{
-			
-			curr_A = bin_A(line[1:],symbol_table,false)
-			assembly = append(assembly, curr_A)
+			assembly = append(assembly, bin_A(line[1:],symbol_table,false))
 			fmt.Println("const: ", curr_A," : ",line)
 
 		} else if c_inst{
@@ -331,20 +342,20 @@ func main(){
 	}
 
 	outdata := make([]byte, 0)
-	l := len(assembly)-1
+	
 	fmt.Printf("\n======\n\n")
-	for i,v := range assembly{
+	for _,v := range assembly{
 		fmt.Println(v)
 		for _,x := range v{
 			outdata = append(outdata, byte(x))
 		}
-		if i < l { outdata = append(outdata, '\n') }
+		outdata = append(outdata, '\n')
 	}
 	fmt.Println()
 	fmt.Println(symbol_table)
 
 	// name := strings.Split(args[1],".")[0]+".hack"
-	name:="out1.hack"
+	name:="out2.hack"
 	err = os.WriteFile(name,outdata,0644)
 	if err!=nil{
 		fmt.Println("Error: writing to file", err)
