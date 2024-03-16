@@ -1,8 +1,11 @@
-#!bin/sh
+#!bin/env bash
+set -o
+
+make clean
 make
 chmod +x Assembler
-for i in asm/*.asm; 
-do
+
+for i in asm/*.asm; do
     ./Assembler $i
 done
 
