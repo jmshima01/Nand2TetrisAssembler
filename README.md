@@ -1,8 +1,4 @@
-a. James Shima
-
-b. few days
-
-c. This is the code base for project 06 for CSCI410.
+This is the code base for project 06 for CSCI410.
 It is writen in Go (1.22.0) and has been tested against 
 the provided Assembler.sh and .asm programs. There were a lot of bugs
 that I had to find such as inc non label vars only based on themselves and
